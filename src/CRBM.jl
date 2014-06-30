@@ -1,7 +1,7 @@
 module CRBM
 
 using RBM
-
+# hallo ich teste dieses zeugs
 export crbm_binary_update!
 export crbm_binary_train_plain!
 # export crbm_binary_train_L2!             # TODO
