@@ -4,6 +4,11 @@ using RBM
 export crbm_control_sample!
 export crbm_binary_train_plain!
 
+#export from RBM package, so that you don't have to import both
+export RBM_t, rbm_copy
+export rbm_create
+export rbm_write, rbm_read
+
 # TODO: Implement this functions
 # export crbm_binary_train_L1!
 # export crbm_binary_train_L2!
@@ -11,11 +16,20 @@ export crbm_binary_train_plain!
 # END TODO
 
 sigm(p::Matrix{Float64})                                    = 1./(1 .+ exp(-p))
-up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64})        = sigm(repmat(rbm.c, 1, size(y)[1]) + rbm.V * y' + rbm.W * x')
-down(rbm::RBM_t, z::Array{Float64})                         = sigm(repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z')
 binary_draw(p::Matrix{Float64})                             = p .> rand(size(p))
-binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64}) = convert(Matrix{Float64},up(rbm, y, x)')
-binary_down(rbm::RBM_t, z::Array{Float64})                  = convert(Matrix{Float64},binary_draw(down(rbm, z)'))
+binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64}) = convert(Matrix{Float64},binary_draw(up(rbm, y, x)))
+binary_down(rbm::RBM_t, z::Array{Float64})                  = convert(Matrix{Float64},binary_draw(down(rbm, z)))
+dvalue(v::Float64, nr_of_bins::Int64)                       = int(min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
+
+function down(rbm::RBM_t, z::Array{Float64})
+  r = sigm(repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z')
+  r'
+end
+
+function up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64})
+  r = sigm(repmat(rbm.c, 1, size(y)[1]) + rbm.V * y' + rbm.W * x')
+  r'
+end
 
 function crbm_learn_sampling!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   Z = binary_up(rbm, y, X)
@@ -55,7 +69,7 @@ function binarise_matrix(A::Matrix{Float64}, bins::Int64)
       d     = dvalue(value, bins)
       b     = int2binary(d, N)
       for u = 1:N
-        B[i,(j-1)*N+u] = b[u]
+        B[i,(j-1)*N+u] = float64(b[u])
       end
     end
   end
@@ -70,15 +84,17 @@ function crbm_binary_train_plain!(rbm, S, A, bins)
   rbm_init_weights_random!(rbm)
   rbm.c           = zeros(rbm.m)
   binary_s_matrix = binarise_matrix(S, bins)
-  rbm_init_visible_bias!(rbm, binary_s_matrix)
+  rbm_init_visible_bias!(rbm, convert(Array{Int64},binary_s_matrix))
 
   for t=1:rbm.numepochs
     # extract data batch for current epoch
-    m     = length(ss) - rbm.batchsize
-    start = 1 + floor((rand() * m)) # 1 to m
-    r     = [1:rbm.batchsize] .+ start
-    s     = ss[int64(ceil(size(ss)[1] * r)),:]
-    a     = aa[int64(ceil(size(aa)[1] * r)),:]
+    m     = size(ss)[1] - rbm.batchsize
+    start = int(1 + floor(rand() * m)) # 1 to m
+    r     = [start:start+50]
+    s     = ss[r,:]
+    a     = aa[r,:]
+    #= println("s:\n$s\n\n") =#
+    #= println("a:\n$a\n\n") =#
 
     # generate hidden states given the data
     z = up(rbm, s, a) 
