@@ -1,17 +1,6 @@
 module CRBM
 
 using RBM
-
-#= export RBM_t, rbm_copy =#
-#= export rbm_create, rbm_create_with_standard_values =#
-#= export rbm_init_weights_random!, rbm_init_visible_bias! =#
-#= export rbm_init_output_bias_random!, rbm_init_hidden_bias_random! =#
-#= export rbm_rescale_weights! =#
-#= export rbm_calculate_L1, rbm_calculate_L2 =#
-#= export rbm_write, rbm_read =#
-#= export sigm =#
-#= export rbm_visualise =#
-
 export crbm_control_sample!
 export crbm_binary_train_plain!
 
