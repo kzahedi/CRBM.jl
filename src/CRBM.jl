@@ -73,10 +73,9 @@ function binarise_matrix(A::Matrix{Float64}, bins::Int64)
   B
 end
 
-function crbm_binary_train_plain!(rbm, S, A, bins, perturbation)
+function crbm_binary_train_plain!(rbm, S, A, bins)
   N  = ceil(log2(bins))
-  P  = perturbation .* randn(size(S))
-  ss = binarise_matrix(S + P, bins)
+  ss = binarise_matrix(S, bins)
   aa = binarise_matrix(A, bins)
 
   rbm_init_weights_random!(rbm)
