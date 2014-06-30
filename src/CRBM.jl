@@ -8,41 +8,51 @@ export crbm_binary_train_plain!
 # export crbm_binary_train_L1!             # TODO
 # export crbm_binary_train_weight_scaling! # TODO
 
-function crbm_binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64})
-  r = repmat(rbm.c, 1, size(y)[1]) + rbm.V * y' + rbm.W * x'
-  convert(Matrix{Float64}, crbm_random_binary_draw(r'))
+crbm_random_binary_draw(p::Matrix{Float64}) = p .> rand(size(p))
+
+function crbm_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64})
+  r = sigm(repmat(rbm.c, 1, size(y)[1]) + rbm.V * y' + rbm.W * x')
 end
 
-
+function crbm_binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64})
+  r = crbm_up(rbm, y, x)
+  convert(Matrix{Float64}, crbm_random_binary_draw(r'))
+end
 
 function crbm_binary_down(rbm::RBM_t, z::Array{Float64})
-  r = repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z'
+  r = crbm_down(rbm, z)
   convert(Matrix{Float64}, crbm_random_binary_draw(r'))
 end
 
-
-
-function crbm_random_binary_draw(p::Matrix{Float64})
-  sigm(p) .> rand(size(p))
+function crbm_down(rbm::RBM_t, z::Array{Float64})
+  sigm(repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z')
 end
 
-
-
-function crbm_binary_update!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
+function crbm_learn_sampling!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   Z = crbm_binary_up(rbm, y, X)
-  for i=1:rbm.uditer
-    X = crbm_binary_down(rbm, Z)
-    Z = crbm_binary_up(rbm, y, X)
+  for i=1:rbm.uditer-1
+    X = crbm_down(rbm, Z)
+    Z = crbm_binary_up(rbm, y, X) # binary
   end       
+  X = crbm_down(rbm, Z)
+  Z = crbm_up(rbm, y, X) # probabilities
   return X,Z
 end
 
+function crbm_control_sample!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
+  Z = crbm_binary_up(rbm, y, X)
+  for i=1:rbm.uditer-1
+    X = crbm_down(rbm, Z)
+    Z = crbm_binary_up(rbm, y, X)
+  end       
+  X = crbm_binary_down(rbm, Z)
+  return X
+end
 
 
 function sigm(p::Matrix{Float64})
   1./(1 .+ exp(-p))
 end
-
 
 
 function int2binary(v::Int64, n::Int64) # checked
@@ -78,22 +88,27 @@ function crbm_binary_train_plain!(rbm, S, A, bins, perturbation)
   P = perturbation .* randn(size(S))
   ss= binarise_matrix(S + P, bins) # binarisation of training data
   aa= binarise_matrix(A, bins) # binarisation of training data
+
+  rbm_init_weights_random!(rbm)
+  rbm.c = zeros(rbm.m)
+  # TODO
+  rbm_init_visible_bias!(rbm, data::Array{Int64,2}) # TODO BINARY DATA
+
   for t=1:rbm.numepochs
     # extract data batch for current epoch
-    r = rand(rbm.batchsize);
-    s = ss[int64(ceil(size(ss)[1] * r)),:] 
-    a = aa[int64(ceil(size(aa)[1] * r)),:]
+    m     = length(ss) - rbm.batchsize
+    # TODO disjunct drawing of data?
+    start = 1 + floor((rand() * m)) # 1 to m
+    r     = [1:rbm.batchsize] .+ start
+    s     = ss[int64(ceil(size(ss)[1] * r)),:]
+    a     = aa[int64(ceil(size(aa)[1] * r)),:]
 
-    # generate hiddens given the data
-    z = crbmup(rbm,s,a) 
+    # generate hidden states given the data
+    z = crbm_up(rbm, s, a) 
 
     # generate random outputs to start sampler
-    A=zeros(size(s)[1], rbm.n) 
-    for i=1:size(s)[1]
-      A[i,:] = transpose(int2binary(int(floor(2^rbm.n * rand())), rbm.n )) 
-    end
-
-    (A, Z) = crbm_binary_update(rbm, s, A) 
+    # TODO: check with guide?
+    (A, Z) = crbm_learn_sampling!(rbm, s, a) 
 
     Eb  = transpose(mean(a,1) - mean(A,1))
     Ec  = transpose(mean(z,1) - mean(Z,1))
