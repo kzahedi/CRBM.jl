@@ -1,11 +1,13 @@
 module CRBM
 
 using RBM
+
 export crbm_control_sample!
 export crbm_binary_train_plain!
 
 #export from RBM package, so that you don't have to import both
-export RBM_t, rbm_copy
+export RBM_t
+export rbm_copy
 export rbm_create
 export rbm_write, rbm_read
 
@@ -19,7 +21,7 @@ sigm(p::Matrix{Float64})                                    = 1./(1 .+ exp(-p))
 binary_draw(p::Matrix{Float64})                             = p .> rand(size(p))
 binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64}) = convert(Matrix{Float64},binary_draw(up(rbm, y, x)))
 binary_down(rbm::RBM_t, z::Array{Float64})                  = convert(Matrix{Float64},binary_draw(down(rbm, z)))
-dvalue(v::Float64, nr_of_bins::Int64)                       = int(min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
+discretise_value(v::Float64, nr_of_bins::Int64)        = int(min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
 
 function down(rbm::RBM_t, z::Array{Float64})
   r = sigm(repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z')
@@ -66,7 +68,7 @@ function binarise_matrix(A::Matrix{Float64}, bins::Int64)
   for i=1:size(A)[1]
     for j=1:size(A)[2]
       value = A[i,j]
-      d     = dvalue(value, bins)
+      d     = discretise_value(value, bins)
       b     = int2binary(d, N)
       for u = 1:N
         B[i,(j-1)*N+u] = float64(b[u])
