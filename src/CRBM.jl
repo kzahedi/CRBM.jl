@@ -89,7 +89,6 @@ function crbm_binary_train!(rbm, S, A, bins)
     m     = size(ss)[1] - rbm.batchsize
     start = int(1 + floor(rand() * m)) # 1 to m
     r     = [start:start+rbm.batchsize]
-    println(r)
     s     = ss[r,:]
     a     = aa[r,:]
 
