@@ -32,7 +32,7 @@ function crbm_learn_sampling!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   for i=1:rbm.uditer-1
     X = down(rbm, Z)
     Z = binary_up(rbm, y, X)
-  end       
+  end
   X = down(rbm, Z)
   Z = up(rbm, y, X)
   return X,Z
@@ -43,7 +43,7 @@ function crbm_control_sample!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   for i=1:rbm.uditer-1
     X = down(rbm, Z)
     Z = binary_up(rbm, y, X)
-  end       
+  end
   X = binary_down(rbm, Z)
   return X
 end
@@ -88,15 +88,16 @@ function crbm_binary_train!(rbm, S, A, bins)
     # extract data batch for current epoch
     m     = size(ss)[1] - rbm.batchsize
     start = int(1 + floor(rand() * m)) # 1 to m
-    r     = [start:start+50]
+    r     = [start:start+rbm.batchsize]
+    println(r)
     s     = ss[r,:]
     a     = aa[r,:]
 
     # generate hidden states given the data
-    z = up(rbm, s, a) 
+    z = up(rbm, s, a)
 
     # generate random outputs to start sampler
-    (A, Z) = crbm_learn_sampling!(rbm, s, a) 
+    (A, Z) = crbm_learn_sampling!(rbm, s, a)
 
     Eb  = transpose(mean(a,1) - mean(A,1))
     Ec  = transpose(mean(z,1) - mean(Z,1))
@@ -113,7 +114,7 @@ function crbm_binary_train!(rbm, S, A, bins)
 
     if rbm.momentum > 0.0
       rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb
-      rbm.c = rbm.c + (rbm.alpha * rbm.momentum) * rbm.vc 
+      rbm.c = rbm.c + (rbm.alpha * rbm.momentum) * rbm.vc
       rbm.W = rbm.W + (rbm.alpha * rbm.momentum) * rbm.vW
       rbm.V = rbm.V + (rbm.alpha * rbm.momentum) * rbm.vV
     end
@@ -129,7 +130,7 @@ function crbm_binary_train!(rbm, S, A, bins)
     rbm.vV = EV
 
   end # training iteration
-end 
+end
 
 end
 
