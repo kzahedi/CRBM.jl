@@ -11,12 +11,6 @@ export rbm_copy
 export rbm_create
 export rbm_write, rbm_read
 
-# TODO: Implement this functions
-# export crbm_binary_train_L1!
-# export crbm_binary_train_L2!
-# export crbm_binary_train_weight_scaling!
-# END TODO
-
 sigm(p::Matrix{Float64})                                    = 1./(1 .+ exp(-p))
 binary_draw(p::Matrix{Float64})                             = p .> rand(size(p))
 binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64}) = convert(Matrix{Float64},binary_draw(up(rbm, y, x)))
@@ -95,8 +89,6 @@ function crbm_binary_train_plain!(rbm, S, A, bins)
     r     = [start:start+50]
     s     = ss[r,:]
     a     = aa[r,:]
-    #= println("s:\n$s\n\n") =#
-    #= println("a:\n$a\n\n") =#
 
     # generate hidden states given the data
     z = up(rbm, s, a) 
@@ -112,22 +104,29 @@ function crbm_binary_train_plain!(rbm, S, A, bins)
     Eb = squeeze(Eb,2)
     Ec = squeeze(Ec,2)
 
-    if rbm.momentum == 0
-      rbm.b = rbm.b + rbm.alpha * Eb  
-      rbm.c = rbm.c + rbm.alpha * Ec  
-      rbm.W = rbm.W + rbm.alpha * EW  
-      rbm.V = rbm.V + rbm.alpha * EV     
-    else 
-      rbm.b = rbm.b + rbm.alpha * Eb + rbm.momentum * rbm.vb 
-      rbm.c = rbm.c + rbm.alpha * Ec + rbm.momentum * rbm.vc 
-      rbm.W = rbm.W + rbm.alpha * EW + rbm.momentum * rbm.vW 
-      rbm.V = rbm.V + rbm.alpha * EV + rbm.momentum * rbm.vV
+    rbm.b = rbm.b + rbm.alpha * Eb
+    rbm.b = rbm.b + rbm.alpha * Eb
+    rbm.c = rbm.c + rbm.alpha * Ec
+    rbm.W = rbm.W + rbm.alpha * EW
+    rbm.V = rbm.V + rbm.alpha * EV
 
-      rbm.vb = Eb
-      rbm.vc = Ec
-      rbm.vW = EW
-      rbm.vV = EV
+    if rbm.momentum > 0.0
+      rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb 
+      rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb 
+      rbm.c = rbm.c + (rbm.alpha * rbm.momentum) * rbm.vc 
+      rbm.W = rbm.W + (rbm.alpha * rbm.momentum) * rbm.vW
+      rbm.V = rbm.V + (rbm.alpha * rbm.momentum) * rbm.vV
     end
+
+    if rbm.weightcost > 0.0 # using L2
+      rbm.W = rbm.W * (1 - rbm.weightcost)
+      rbm.V = rbm.V * (1 - rbm.weightcost)
+    end
+
+    rbm.vb = Eb
+    rbm.vc = Ec
+    rbm.vW = EW
+    rbm.vV = EV
 
   end # training iteration
 end 
