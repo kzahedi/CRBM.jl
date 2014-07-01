@@ -107,14 +107,12 @@ function crbm_binary_train!(rbm, S, A, bins)
     Ec = squeeze(Ec,2)
 
     rbm.b = rbm.b + rbm.alpha * Eb
-    rbm.b = rbm.b + rbm.alpha * Eb
     rbm.c = rbm.c + rbm.alpha * Ec
     rbm.W = rbm.W + rbm.alpha * EW
     rbm.V = rbm.V + rbm.alpha * EV
 
     if rbm.momentum > 0.0
-      rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb 
-      rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb 
+      rbm.b = rbm.b + (rbm.alpha * rbm.momentum) * rbm.vb
       rbm.c = rbm.c + (rbm.alpha * rbm.momentum) * rbm.vc 
       rbm.W = rbm.W + (rbm.alpha * rbm.momentum) * rbm.vW
       rbm.V = rbm.V + (rbm.alpha * rbm.momentum) * rbm.vV
