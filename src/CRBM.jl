@@ -3,7 +3,7 @@ module CRBM
 using RBM
 
 export crbm_control_sample!
-export crbm_binary_train_plain!
+export crbm_binary_train!
 
 #export from RBM package, so that you don't have to import both
 export RBM_t
@@ -72,7 +72,9 @@ function binarise_matrix(A::Matrix{Float64}, bins::Int64)
   B
 end
 
-function crbm_binary_train_plain!(rbm, S, A, bins)
+function crbm_binary_train!(rbm, S, A, bins)
+  @assert (rbm.dropout >= 0.0 && rbm.dropout <= 1.0) "Dropout must be in [0,1]"
+  # TODO more asserts
   N  = ceil(log2(bins))
   ss = binarise_matrix(S, bins)
   aa = binarise_matrix(A, bins)
