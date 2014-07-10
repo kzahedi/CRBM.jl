@@ -72,16 +72,16 @@ function binarise_matrix(A::Matrix{Float64}, bins::Int64)
   B
 end
 
-function crbm_binary_train!(rbm, S, A, bins)
+function crbm_binary_train!(rbm, S, A)
   @assert (rbm.dropout >= 0.0 && rbm.dropout <= 1.0) "Dropout must be in [0,1]"
   # TODO more asserts
-  N  = ceil(log2(bins))
-  ss = binarise_matrix(S, bins)
-  aa = binarise_matrix(A, bins)
+  N  = ceil(log2(rbm.bins))
+  ss = binarise_matrix(S, rbm.bins)
+  aa = binarise_matrix(A, rbm.bins)
 
   rbm_init_weights_random!(rbm)
   rbm.c           = zeros(rbm.m)
-  binary_s_matrix = binarise_matrix(S, bins)
+  binary_s_matrix = binarise_matrix(S, rbm.bins)
   rbm_init_visible_bias!(rbm, convert(Array{Int64},binary_s_matrix))
 
   for t=1:rbm.numepochs
