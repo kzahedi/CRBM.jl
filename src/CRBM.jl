@@ -79,7 +79,7 @@ function crbm_binary_train!(rbm, S, A)
   ss = binarise_matrix(S, rbm.bins)
   aa = binarise_matrix(A, rbm.bins)
 
-  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0 && maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0
+  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0
     println("Initialising W,V, and c.")
     rbm_init_weights_random!(rbm)
     rbm.c           = zeros(rbm.m)
