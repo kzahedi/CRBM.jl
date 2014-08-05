@@ -30,18 +30,18 @@ end
 function crbm_learn_sampling!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   Z = binary_up(rbm, y, X)
   for i=1:rbm.uditer-1
-    X = down(rbm, Z)
+    X = binary_down(rbm, Z)
     Z = binary_up(rbm, y, X)
   end
-  X = down(rbm, Z)
-  Z = up(rbm, y, X)
+  X = binary_down(rbm, Z)
+  Z = binary_up(rbm, y, X)
   return X,Z
 end
 
 function crbm_control_sample!(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   Z = binary_up(rbm, y, X)
   for i=1:rbm.uditer-1
-    X = down(rbm, Z)
+    X = binary_down(rbm, Z)
     Z = binary_up(rbm, y, X)
   end
   X = binary_down(rbm, Z)
@@ -79,7 +79,7 @@ function crbm_binary_train!(rbm, S, A)
   ss = binarise_matrix(S, rbm.bins)
   aa = binarise_matrix(A, rbm.bins)
 
-  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0
+  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
     println("Initialising W,V, and c.")
     rbm_init_weights_random!(rbm)
     rbm.c           = zeros(rbm.m)
@@ -97,7 +97,7 @@ function crbm_binary_train!(rbm, S, A)
     a     = aa[r,:]
 
     # generate hidden states given the data
-    z = up(rbm, s, a)
+    z = binary_up(rbm, s, a)
 
     # generate random outputs to start sampler
     (A, Z) = crbm_learn_sampling!(rbm, s, a)

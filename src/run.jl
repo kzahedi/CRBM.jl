@@ -17,7 +17,7 @@ function run_job!(rbm, S, A)
     else
         crbm_binary_train!(rbm, S, A)
     end
-    rbm_write("/Users/zahedi/Desktop/rbm.rbm", rbm)
+#    rbm_write("/Users/zahedi/Desktop/rbm.rbm", rbm)
     println("done.")
 end
 
@@ -95,15 +95,15 @@ actuators = data[:,actuator_indices];
 data      = [];
 
 bins          = 8;
-units         = int(log2(bins))
+units         = int(log2(bins)) # units pro sensor
 n             = units * size(sensors)[2]
 k             = n;
 m             = 300;
 uditer        = 15;
-alpha         = 1.0;
-momentum      = 1.0;
+alpha         = 0.5;
+momentum      = 0.5;
 weightcost    = 0.00;
-epochs        = 50000;
+epochs        = 1000;
 batch         = 50;
 perturbation  = 0.00;
 
@@ -111,13 +111,6 @@ overallepochs = 0
 
 rbm           = rbm_create(n, m, k, uditer, alpha, momentum, weightcost, epochs, batch, bins, 0.0, perturbation);
 
-rbm.numepochs    = 1000
-rbm.alpha        = 1.0;
-rbm.momentum     = 0.5;
-rbm.weightcost   = 0.00;
-rbm.numepochs    = 1000;
-rbm.batchsize    = 50;
-rbm.perturbation = 0.01;
 
 overallepochs = overallepochs + rbm.numepochs
 
