@@ -15,7 +15,7 @@ sigm(p::Matrix{Float64})                                    = 1./(1 .+ exp(-p))
 binary_draw(p::Matrix{Float64})                             = p .> rand(size(p))
 binary_up(rbm::RBM_t, y::Array{Float64}, x::Array{Float64}) = convert(Matrix{Float64},binary_draw(up(rbm, y, x)))
 binary_down(rbm::RBM_t, z::Array{Float64})                  = convert(Matrix{Float64},binary_draw(down(rbm, z)))
-discretise_value(v::Float64, nr_of_bins::Int64)        = int(min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
+discretise_value(v::Float64, nr_of_bins::Int64)             = int(min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
 
 function down(rbm::RBM_t, z::Array{Float64})
   r = sigm(repmat(rbm.b, 1, size(z)[1]) + rbm.W' * z')
