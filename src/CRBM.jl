@@ -10,6 +10,7 @@ export RBM_t
 export rbm_copy
 export rbm_create
 export rbm_write, rbm_read
+export binarise_matrix
 
 sigm(p::Matrix{Float64})                                    = 1./(1 .+ exp(-p))
 binary_draw(p::Matrix{Float64})                             = p .> rand(size(p))
