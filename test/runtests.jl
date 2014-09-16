@@ -28,3 +28,22 @@ using Base.Test
 
 # test basic functions - float matrix to binary vector
 @test [[0.0 0.0 0.0 0.0], [0.0 0.0 0.0 0.0]] == binarise_matrix([[-1.0 -1.0], [-1.0 -1.0]], 4)
+
+# test inverse binning
+@test 0 == b2i([0.0, 0.0])
+@test 1 == b2i([0.0, 1.0])
+@test 2 == b2i([1.0, 0.0])
+@test 3 == b2i([1.0, 1.0])
+
+# test inverse binning - vector
+@test [0, 1] == b2iv([0.0, 0.0, 0.0, 1.0], 2)
+@test [2, 3] == b2iv([1.0, 0.0, 1.0, 1.0], 2)
+
+@test [-0.75, -0.25] == bv2dv([0.0, 0.0, 0.0, 1.0], 4)
+@test [0.25, 0.75]   == bv2dv([1.0, 0.0, 1.0, 1.0], 4)
+
+# test inverse binning - matrix
+@test [[-0.75 -0.25], [0.25 0.75]] == unbinarise_matrix([[0.0 0.0 0.0 1.0], [1.0 0.0 1.0 1.0]], 4)
+ 
+# test binary_draw
+@test [1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0] == binary_draw([1.1 1.1 1.1 1.1 -0.1 -0.1 -0.1 -0.1])
