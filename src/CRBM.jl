@@ -31,10 +31,11 @@ export up, down, binary_up, binary_down
 type CRBM_cfg_t
   use_progress_meter::Bool
   use_pyplot::Bool
+  plot_steps::Int64
 end
 
 function crbm_create_config()
-  return CRBM_cfg_t(true, true)
+  return CRBM_cfg_t(true, true, 100)
 end
 
 function crbm_learn_sampling(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
@@ -66,7 +67,8 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
   binary_s_matrix = binarise_matrix(S, rbm.bins)
   println("binarising actuator data")
   binary_a_matrix = binarise_matrix(A, rbm.bins)
-  ns = size(binary_s_matrix[1,:])[1]
+  ds = size(S)
+  ns = ds[1]
 
   if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
     println("Initialising W, V, and c.")
@@ -82,7 +84,7 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
   binary_a_matrix = transpose(binary_a_matrix)
 
   if cfg.use_progress_meter == true
-    pm = Progress(rbm.numepochs, 1)
+    pm = Progress(rbm.numepochs, 1, "Training progress:", 50)
   end
 
   println("Starting learning")
@@ -90,7 +92,8 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     # extract data batch for current epoch
     m     = size(binary_s_matrix)[2] - rbm.batchsize
     start = int(1 + floor(rand() * m)) # 1 to m
-    r     = [start:start+rbm.batchsize-1]
+    #r     = [start:start+rbm.batchsize-1]
+    r     = rand(1:ns, rbm.batchsize)
     s     = binary_s_matrix[:,r] # because it is transposed
     a     = binary_a_matrix[:,r] # because it is transposed
 
@@ -133,7 +136,7 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     rbm.vV = EV
 
     if cfg.use_pyplot == true
-      if t % 500 == 0 || t == 0
+      if t % cfg.plot_steps == 0 || t == 0
         clf()
         subplot(121)
         colorbar(imshow(rbm.W))
@@ -142,7 +145,9 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
       end
     end
 
-    next!(pm)
+    if cfg.use_progress_meter
+      next!(pm)
+    end
   end # training iteration
 end
 
