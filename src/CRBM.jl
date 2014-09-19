@@ -32,10 +32,11 @@ type CRBM_cfg_t
   use_progress_meter::Bool
   use_pyplot::Bool
   plot_steps::Int64
+  batchmode::String
 end
 
 function crbm_create_config()
-  return CRBM_cfg_t(true, true, 100)
+  return CRBM_cfg_t(true, true, 100, "random")
 end
 
 function crbm_learn_sampling(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
@@ -87,13 +88,17 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     pm = Progress(rbm.numepochs, 1, "Training progress:", 50)
   end
 
+  m     = ns - rbm.batchsize
+
   println("Starting learning")
   for t=1:rbm.numepochs
     # extract data batch for current epoch
-    m     = size(binary_s_matrix)[2] - rbm.batchsize
     start = int(1 + floor(rand() * m)) # 1 to m
-    #r     = [start:start+rbm.batchsize-1]
-    r     = rand(1:ns, rbm.batchsize)
+    if cfg.batchmode == "sequential"
+      r     = [start:start+rbm.batchsize-1]
+    else #if cfg.batch_mode == "random"
+      r     = rand(1:ns, rbm.batchsize)
+    end
     s     = binary_s_matrix[:,r] # because it is transposed
     a     = binary_a_matrix[:,r] # because it is transposed
 
