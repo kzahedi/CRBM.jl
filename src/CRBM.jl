@@ -68,8 +68,8 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
   binary_s_matrix = binarise_matrix(S, rbm.bins)
   println("binarising actuator data")
   binary_a_matrix = binarise_matrix(A, rbm.bins)
-  ds = size(S)
-  ns = ds[1]
+  ns = size(S)[1]
+  nb = rbm.batchsize
 
   if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
     println("Initialising W, V, and c.")
@@ -110,8 +110,8 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
 
     Eb  = transpose(mean(a,2) - mean(A,2))
     Ec  = transpose(mean(z,2) - mean(Z,2))
-    EW  = (z * a' - Z * A')/ns
-    EV  = (z * s' - Z * s')/ns
+    EW  = (z * a' - Z * A')/nb
+    EV  = (z * s' - Z * s')/nb
 
     Eb = squeeze(Eb,1)
     Ec = squeeze(Ec,1)
