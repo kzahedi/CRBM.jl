@@ -32,10 +32,11 @@ type CRBM_cfg_t
   use_pyplot::Bool
   plot_steps::Int64
   batchmode::String
+  verbose::Bool
 end
 
 function crbm_create_config()
-  return CRBM_cfg_t(true, true, 100, "random")
+  return CRBM_cfg_t(true, true, 100, "random", false)
 end
 
 
@@ -65,21 +66,29 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
 
   # TODO more assert statements needed
   N  = ceil(log2(rbm.bins))
-  println("binarising sensor data")
+  if cfg.verbose == true
+    println("binarising sensor data")
+  end
   binary_s_matrix = binarise_matrix(S, rbm.bins)
-  println("binarising actuator data")
+  if cfg.verbose == true
+    println("binarising actuator data")
+  end
   binary_a_matrix = binarise_matrix(A, rbm.bins)
   ns = size(S)[1]
   nb = rbm.batchsize
 
   if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 &&
      maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
-    println("Initialising W, V, and c.")
+     if cfg.verbose == true
+       println("Initialising W, V, and c.")
+     end
     rbm_init_weights_random!(rbm)
     rbm.c = zeros(rbm.m)
   end
 
-  println("Initialising visible bias")
+  if cfg.verbose == true
+    println("Initialising visible bias")
+  end
   rbm_init_visible_bias!(rbm, convert(Array{Int64},binary_s_matrix))
 
   if cfg.use_progress_meter == true
@@ -88,7 +97,9 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
 
   m = ns - rbm.batchsize
 
-  println("Starting learning")
+  if cfg.verbose == true
+    println("Starting learning")
+  end
   for t=1:rbm.numepochs
     # extract data batch for current epoch
     start = int(1 + floor(rand() * m)) # 1 to m

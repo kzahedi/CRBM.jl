@@ -64,6 +64,7 @@ end
 
 # .- because bin_vector in [1, bins]
 binarise_vector(v::Vector{Float64}, bins::Int64) = iv2b(bin_vector(v, -1.0, 1.0, bins), int(ceil(log2(bins))))
+
 function unbinarise_matrix(A::Matrix{Float64}, bins::Int64; mode="centre")
   N = int(ceil(log2(bins)))
   w = size(A)[1]
