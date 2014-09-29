@@ -105,3 +105,8 @@ for i=0:200
 end
 
 
+for i=1:100
+  r = rand(12)
+  #= @test discretise(r, 16) == binarise_vector(r, 16) =#
+  @test discretise(r, 16) == iv2b(bin_vector(r, -1.0, 1.0, 16), 4)
+end
