@@ -6,7 +6,6 @@ include("update_functions.jl")
 using RBM
 using ProgressMeter
 using PyPlot
-using Shannon
 
 export crbm_control_sample
 export crbm_binary_train!
@@ -16,14 +15,14 @@ export RBM_t
 export CRBM_cfg_t, crbm_create_config
 export rbm_copy
 export rbm_create
-export rbm_write, rbm_read
+export rbm_write, rbm_read, rbm_read_old
 export rbm_init_weights_random!
 export rbm_init_visible_bias!
 export rbm_init_output_bias_random!, rbm_init_hidden_bias_random!
 
 export binarise_matrix, i2b, iv2b, binarise_vector
 export unbinarise_matrix, b2i, b2iv, bv2dv
-export bin_value, bin_matrix, bin_vector
+export bv, bin_matrix, bin_vector
 export unbin_value, unbin_matrix, unbin_vector
 export binary_draw
 export up, down, binary_up, binary_down
@@ -38,6 +37,7 @@ end
 function crbm_create_config()
   return CRBM_cfg_t(true, true, 100, "random")
 end
+
 
 function crbm_learn_sampling(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
   Z = binary_up(rbm, y, X)
@@ -62,6 +62,7 @@ end
 
 function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::Matrix{Float64})
   @assert (rbm.dropout >= 0.0 && rbm.dropout <= 1.0) "Dropout must be in [0,1]"
+
   # TODO more assert statements needed
   N  = ceil(log2(rbm.bins))
   println("binarising sensor data")
@@ -71,7 +72,8 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
   ns = size(S)[1]
   nb = rbm.batchsize
 
-  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 && maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
+  if maximum(rbm.W) == 0.0 && minimum(rbm.W) == 0.0 &&
+     maximum(rbm.V) == 0.0 && minimum(rbm.V) == 0.0
     println("Initialising W, V, and c.")
     rbm_init_weights_random!(rbm)
     rbm.c = zeros(rbm.m)
@@ -80,15 +82,11 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
   println("Initialising visible bias")
   rbm_init_visible_bias!(rbm, convert(Array{Int64},binary_s_matrix))
 
-  println("Transposing teaching data")
-  binary_s_matrix = transpose(binary_s_matrix)
-  binary_a_matrix = transpose(binary_a_matrix)
-
   if cfg.use_progress_meter == true
-    pm = Progress(rbm.numepochs, 1, "Training progress:", 50)
+    pm = Progress(rbm.numepochs, 1, "Training progress:", 20)
   end
 
-  m     = ns - rbm.batchsize
+  m = ns - rbm.batchsize
 
   println("Starting learning")
   for t=1:rbm.numepochs
@@ -99,22 +97,29 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     else #if cfg.batch_mode == "random"
       r     = rand(1:ns, rbm.batchsize)
     end
-    s     = binary_s_matrix[:,r] # because it is transposed
-    a     = binary_a_matrix[:,r] # because it is transposed
+
+    s = binary_s_matrix[r,:]
+    a = binary_a_matrix[r,:]
 
     # generate hidden states given the data
+    #= z = binary_up(rbm, s, a) =#
     z = binary_up(rbm, s, a)
 
     # generate random outputs to start sampler
-    (A, Z) = crbm_learn_sampling(rbm, s, a)
+    A=zeros(size(s)[1], rbm.n) 
+    for i=1:size(s)[1]
+      A[i,:] = transpose(i2b(int(floor(2^rbm.n * rand())), rbm.n )) 
+    end
 
-    Eb  = transpose(mean(a,2) - mean(A,2))
-    Ec  = transpose(mean(z,2) - mean(Z,2))
-    EW  = (z * a' - Z * A')/nb
-    EV  = (z * s' - Z * s')/nb
+    (A, Z) = crbm_learn_sampling(rbm, s, A)
 
-    Eb = squeeze(Eb,1)
-    Ec = squeeze(Ec,1)
+    Eb  = transpose(mean(a,1) - mean(A,1))
+    Ec  = transpose(mean(z,1) - mean(Z,1))
+    EW  = (z' * a - Z' * A)/nb
+    EV  = (z' * s - Z' * s)/nb
+
+    Eb = squeeze(Eb,2)
+    Ec = squeeze(Ec,2)
 
     rbm.b = rbm.b + rbm.alpha * Eb
     rbm.c = rbm.c + rbm.alpha * Ec

@@ -25,6 +25,7 @@ using Base.Test
 # test basic functions - integer vector to binary vector
 @test [0.0, 0.0, 0.0, 0.0] == iv2b([0, 0], 2)
 @test [0.0, 1.0, 1.0, 0.0] == iv2b([1, 2], 2)
+@test [0.0, 1.0, 0.0, 0.0] == iv2b([4],    4)
 
 # test basic functions - float matrix to binary vector
 @test [[0.0 0.0 0.0 0.0], [0.0 0.0 0.0 0.0]] == binarise_matrix([[-1.0 -1.0], [-1.0 -1.0]], 4)
@@ -47,3 +48,60 @@ using Base.Test
  
 # test binary_draw
 @test [1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0] == binary_draw([1.1 1.1 1.1 1.1 -0.1 -0.1 -0.1 -0.1])
+
+
+# test against old code
+
+function undiscretise(v, nr_of_bins)
+  n = int(log2(nr_of_bins))
+  l = int(length(v)/log2(nr_of_bins))
+  r = zeros(l)
+  for i=1:l
+    r[i] = binary2integer(v[(i-1)*n+1:i*n])
+  end
+  r = 2.0 .* (r ./ (nr_of_bins) .+ 1 / (2*nr_of_bins)) .- 1.0 
+end
+
+function binary2integer(v) # tested
+  d = convert(Vector{Int64}, v)
+  r = 0
+  n = length(d)
+  for i=1:n
+    r += (d[i]>0)?(1<<(n-i)):0
+  end
+  return r
+end
+
+for i=0:200
+  j = float(i-100)/200.0
+  k = bv(j, 16, -1.0, 1.0)
+  l = i2b(k,4)
+  @test undiscretise(l, 16)[1] == bv2dv(l, 16)
+end
+
+function int2binary(v::Int64, n::Int64) # checked
+  r=zeros(n)
+  for i=1:n
+    r[i] = (((1 << (n-i)) & v)>0)?1.0:0.0
+  end
+  return r
+end
+
+function discretise(v, nr_of_bins) # checked
+  d = convert(Vector{Int64},min(floor(nr_of_bins * (v .+ 1) ./ 2.0), nr_of_bins-1))
+  r = Float64[]
+  u = int(log2(nr_of_bins))
+  for i = 1:length(d)
+    r = append!(r,int2binary(d[i], u))
+  end
+  return r
+end
+
+for i=0:200
+  j = float(i-100)/200.0
+  k = discretise([j], 16)
+  l = iv2b(bin_vector([j], -1.0, 1.0, 16), 4)
+  @test k == l
+end
+
+
