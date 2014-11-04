@@ -5,7 +5,7 @@ include("update_functions.jl")
 
 using RBM
 using ProgressMeter
-using PyPlot
+#using PyPlot
 
 export crbm_control_sample
 export crbm_binary_train!
@@ -15,10 +15,10 @@ export RBM_t
 export CRBM_cfg_t, crbm_create_config
 export rbm_copy
 export rbm_create
-export rbm_write, rbm_read, rbm_read_old
 export rbm_init_weights_random!
 export rbm_init_visible_bias!
 export rbm_init_output_bias_random!, rbm_init_hidden_bias_random!
+export rbm_write, rbm_read, rbm_read_old
 
 export binarise_matrix, i2b, iv2b, binarise_vector
 export unbinarise_matrix, b2i, b2iv, bv2dv
@@ -58,7 +58,7 @@ function crbm_control_sample(rbm::RBM_t, y::Array{Float64}, X::Array{Float64})
     Z = binary_up(rbm, y, X)
   end
   X = binary_down(rbm, Z)
-  return X
+  return X,Z
 end
 
 function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::Matrix{Float64})
@@ -156,15 +156,15 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     rbm.vW = EW
     rbm.vV = EV
 
-    if cfg.use_pyplot == true
-      if t % cfg.plot_steps == 0 || t == 0
-        clf()
-        subplot(121)
-        colorbar(imshow(rbm.W))
-        subplot(122)
-        colorbar(imshow(rbm.V))
-      end
-    end
+    #= if cfg.use_pyplot == true =#
+      #= if t % cfg.plot_steps == 0 || t == 0 =#
+        #= clf() =#
+        #= subplot(121) =#
+        #= colorbar(imshow(rbm.W)) =#
+        #= subplot(122) =#
+        #= colorbar(imshow(rbm.V)) =#
+      #= end =#
+    #= end =#
 
     if cfg.use_progress_meter
       next!(pm)
