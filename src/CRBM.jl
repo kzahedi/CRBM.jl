@@ -117,9 +117,9 @@ function crbm_binary_train!(cfg::CRBM_cfg_t, rbm::RBM_t, S::Matrix{Float64}, A::
     z = binary_up(rbm, s, a)
 
     # generate random outputs to start sampler
-    A=zeros(size(s)[1], rbm.n) 
+    A=zeros(size(s)[1], rbm.n)
     for i=1:size(s)[1]
-      A[i,:] = transpose(i2b(int(floor(2^rbm.n * rand())), rbm.n )) 
+      A[i,:] = transpose(i2b(int(floor(2^rbm.n * rand())), rbm.n ))
     end
 
     (A, Z) = crbm_learn_sampling(rbm, s, A)
