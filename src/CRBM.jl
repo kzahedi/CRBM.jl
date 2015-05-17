@@ -14,7 +14,7 @@ export crbm_binary_train!
 export RBM_t
 export CRBM_cfg_t, crbm_create_config
 export rbm_copy
-export rbm_create
+export rbm_create,rbm_create_full
 export rbm_init_weights_random!
 export rbm_init_visible_bias!
 export rbm_init_output_bias_random!, rbm_init_hidden_bias_random!
